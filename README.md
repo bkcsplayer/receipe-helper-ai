@@ -51,13 +51,28 @@ All new environment variables live in `server/env.example` (runtime) and `env.do
 
 ### Visual Overview
 
-| Architecture | Pipeline | Admin Dashboard |
-| --- | --- | --- |
-| ![Architecture](docs/images/architecture.svg) | ![Pipeline](docs/images/pipeline.svg) | ![Dashboard](docs/images/dashboard.svg) |
-
-| Mobile Upload + Email | SSE Progress | System Health |
-| --- | --- | --- |
-| ![Mobile Upload](docs/images/mobile-upload.svg) | ![Progress](docs/images/progress.svg) | ![System Health](docs/images/system-health.svg) |
+<table>
+  <tr>
+    <th>Architecture</th>
+    <th>Pipeline</th>
+    <th>Admin Dashboard</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/architecture.svg?raw=1" width="240" alt="Architecture diagram"/></td>
+    <td align="center"><img src="docs/images/pipeline.svg?raw=1" width="240" alt="Pipeline diagram"/></td>
+    <td align="center"><img src="docs/images/dashboard.svg?raw=1" width="420" alt="Admin dashboard mock"/></td>
+  </tr>
+  <tr>
+    <th>Mobile Upload + Email</th>
+    <th>SSE Progress</th>
+    <th>System Health</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/mobile-upload.svg?raw=1" width="260" alt="Mobile upload illustration"/></td>
+    <td align="center"><img src="docs/images/progress.svg?raw=1" width="260" alt="SSE progress illustration"/></td>
+    <td align="center"><img src="docs/images/system-health.svg?raw=1" width="320" alt="System health illustration"/></td>
+  </tr>
+</table>
 
 ### Admin Console
 
