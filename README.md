@@ -58,9 +58,9 @@ All new environment variables live in `server/env.example` (runtime) and `env.do
     <th>Admin Dashboard</th>
   </tr>
   <tr>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/architecture.svg" width="240" alt="Architecture diagram"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/pipeline.svg" width="240" alt="Pipeline diagram"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/dashboard.svg" width="420" alt="Admin dashboard mock"/></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/architecture.png" width="240" alt="Architecture diagram"/></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/pipeline.png" width="240" alt="Pipeline diagram"/></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/dashboard.png" width="420" alt="Admin dashboard mock"/></td>
   </tr>
   <tr>
     <th>Mobile Upload + Email</th>
@@ -68,9 +68,9 @@ All new environment variables live in `server/env.example` (runtime) and `env.do
     <th>System Health</th>
   </tr>
   <tr>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/mobile-upload.svg" width="260" alt="Mobile upload illustration"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/progress.svg" width="260" alt="SSE progress illustration"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/system-health.svg" width="320" alt="System health illustration"/></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/mobile-upload.png" width="260" alt="Mobile upload illustration"/></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/progress.png" width="260" alt="SSE progress illustration"/></td>
+    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/system-health.png" width="320" alt="System health illustration"/></td>
   </tr>
 </table>
 
