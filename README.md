@@ -49,6 +49,12 @@ The V2 release introduces:
 
 All new environment variables live in `server/env.example` (runtime) and `env.docker.example` (compose defaults). Copy them to `.env` / `server/.env` before running.
 
+### Visual Overview
+
+| Architecture | Pipeline | Admin Dashboard |
+| --- | --- | --- |
+| ![Architecture](docs/images/architecture.svg) | ![Pipeline](docs/images/pipeline.svg) | ![Dashboard](docs/images/dashboard.svg) |
+
 ### Admin Console
 
 - Source code: `apps/admin`

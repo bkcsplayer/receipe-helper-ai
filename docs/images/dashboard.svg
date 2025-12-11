@@ -1,0 +1,42 @@
+<svg width="900" height="520" viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" style="font-family:'Patrick Hand', 'Inter', sans-serif; background:#f8f4ec">
+  <style>
+    .panel { fill:#fff; stroke:#2a3a68; stroke-width:2; rx:20; }
+    .title { font-size:24px; fill:#2a3a68; font-weight:600; }
+    .metric { font-size:20px; fill:#ff8c42; }
+    .card-title { font-size:16px; fill:#2a3a68; }
+    .card-label { font-size:14px; fill:#4e3b31; }
+  </style>
+
+  <rect x="40" y="40" width="820" height="440" class="panel"/>
+  <text x="70" y="85" class="title">Receipt AI Admin – Overview Dashboard</text>
+
+  <rect x="70" y="110" width="220" height="120" class="panel"/>
+  <text x="90" y="145" class="card-title">Monthly Spend</text>
+  <text x="90" y="180" class="metric">$ 4,280</text>
+  <text x="90" y="205" class="card-label">+12% vs last month</text>
+
+  <rect x="320" y="110" width="220" height="120" class="panel"/>
+  <text x="340" y="145" class="card-title">Fuel / 100km</text>
+  <text x="340" y="180" class="metric">$ 8.42</text>
+  <text x="340" y="205" class="card-label">Target: $7.50</text>
+
+  <rect x="570" y="110" width="220" height="120" class="panel"/>
+  <text x="590" y="145" class="card-title">Maintenance / 100km</text>
+  <text x="590" y="180" class="metric">$ 10.10</text>
+  <text x="590" y="205" class="card-label">Warning: above limit</text>
+
+  <rect x="70" y="260" width="350" height="180" class="panel"/>
+  <text x="90" y="295" class="card-title">Top Merchants</text>
+  <text x="90" y="325" class="card-label">1. Shell Canada – $610</text>
+  <text x="90" y="350" class="card-label">2. Tesla Service – $420</text>
+  <text x="90" y="375" class="card-label">3. Whole Foods – $315</text>
+  <text x="90" y="400" class="card-label">4. Costco – $260</text>
+
+  <rect x="450" y="260" width="340" height="180" class="panel"/>
+  <text x="470" y="295" class="card-title">Optimization Notes</text>
+  <text x="470" y="325" class="card-label">• Lock in Shell membership to save 6%</text>
+  <text x="470" y="350" class="card-label">• Schedule maintenance bundle every 8k km</text>
+  <text x="470" y="375" class="card-label">• Audit duplicate subscriptions (2x Spotify)</text>
+  <text x="470" y="400" class="card-label">• Consider EV charge credits for winter</text>
+</svg>
+
