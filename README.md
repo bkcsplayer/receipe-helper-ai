@@ -55,6 +55,10 @@ All new environment variables live in `server/env.example` (runtime) and `env.do
 | --- | --- | --- |
 | ![Architecture](docs/images/architecture.svg) | ![Pipeline](docs/images/pipeline.svg) | ![Dashboard](docs/images/dashboard.svg) |
 
+| Mobile Upload + Email | SSE Progress | System Health |
+| --- | --- | --- |
+| ![Mobile Upload](docs/images/mobile-upload.svg) | ![Progress](docs/images/progress.svg) | ![System Health](docs/images/system-health.svg) |
+
 ### Admin Console
 
 - Source code: `apps/admin`

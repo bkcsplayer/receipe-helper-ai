@@ -1,0 +1,15 @@
+<svg width="900" height="320" viewBox="0 0 900 320" xmlns="http://www.w3.org/2000/svg" style="font-family:'Inter',sans-serif;background:#f0f7ff">
+  <style>
+    .panel { fill:#fff; stroke:#2a3a68; stroke-width:2; rx:18; }
+    .title { font-size:20px; font-weight:600; fill:#2a3a68; }
+    .row { font-size:16px; }
+  </style>
+  <rect x="50" y="40" width="800" height="240" class="panel"/>
+  <text x="80" y="80" class="title">System Health Snapshot</text>
+  <text x="80" y="120" class="row">🧠 AI: <tspan fill="#0a8a46">OK</tspan> – OpenRouter key detected</text>
+  <text x="80" y="150" class="row">☁️ Archive: <tspan fill="#0a8a46">R2 Ready</tspan> (Drive fallback)</text>
+  <text x="80" y="180" class="row">📧 Email Intake: <tspan fill="#f98c00">IMAP polling</tspan></text>
+  <text x="80" y="210" class="row">📊 Sheets: <tspan fill="#0a8a46">Connected</tspan> – Monthly tabs verified</text>
+  <text x="80" y="240" class="row">📨 Notifications: Telegram + SMTP configured</text>
+</svg>
+

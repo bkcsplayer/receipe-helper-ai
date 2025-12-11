@@ -1,0 +1,26 @@
+<svg width="900" height="420" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg" style="font-family:'Patrick Hand','Inter',sans-serif;background:#f8f4ec">
+  <style>
+    .phone { fill:#fff; stroke:#2a3a68; stroke-width:4; rx:45; }
+    .btn { fill:#ff8c42; stroke:#2a3a68; stroke-width:2; rx:18; }
+    .txt { fill:#2a3a68; font-size:20px; }
+    .caption { fill:#4e3b31; font-size:16px; }
+  </style>
+  <rect x="200" y="40" width="280" height="340" class="phone"/>
+  <rect x="220" y="70" width="240" height="90" fill="#fff8f0" stroke="#2a3a68" stroke-width="2" rx="18"/>
+  <text x="240" y="110" class="txt">Upload Receipt</text>
+  <text x="240" y="140" class="caption">Tap to open camera / gallery</text>
+  <rect x="220" y="190" width="240" height="40" class="btn"/>
+  <text x="260" y="218" fill="#fff" font-size="20px">Choose Photo</text>
+  <rect x="220" y="240" width="240" height="80" fill="#fcf0e4" stroke="#2a3a68" stroke-width="2" rx="14"/>
+  <text x="235" y="270" class="caption">Auto-detect totals</text>
+  <text x="235" y="295" class="caption">AI normalizes JSON</text>
+
+  <rect x="520" y="60" width="280" height="300" fill="#fff" stroke="#2a3a68" stroke-width="3" rx="24"/>
+  <text x="540" y="110" class="txt">Email Intake</text>
+  <text x="540" y="140" class="caption">• IMAP listener</text>
+  <text x="540" y="165" class="caption">• Attachment filtering</text>
+  <text x="540" y="190" class="caption">• Claude parses HTML</text>
+  <rect x="550" y="220" width="230" height="50" fill="#e5f2ff" stroke="#2a3a68" stroke-width="2" rx="16"/>
+  <text x="565" y="250" class="caption">Status: Syncing every 15s</text>
+</svg>
+
