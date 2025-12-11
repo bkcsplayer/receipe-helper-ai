@@ -1,7 +1,7 @@
 <svg width="900" height="360" viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg" style="font-family:'Inter',sans-serif;background:#fdf5ea">
   <defs>
     <style>
-      .stage { fill:#fff; stroke:#2a3a68; stroke-width:2; rx:14; }
+      .stage { fill:#fff; stroke:#2a3a68; stroke-width:2; }
       .label { font-size:16px; font-weight:600; fill:#2a3a68; }
       .desc { font-size:13px; fill:#4e3b31; }
       .arrow { stroke:#ff8c42; stroke-width:3; marker-end:url(#arrowHead); }
@@ -11,23 +11,23 @@
     </marker>
   </defs>
 
-  <rect x="40" y="80" width="150" height="160" class="stage"/>
+  <rect x="40" y="80" width="150" height="160" rx="14" ry="14" class="stage"/>
   <text x="60" y="120" class="label">Capture</text>
   <text x="60" y="150" class="desc">Upload + Email</text>
   <text x="60" y="175" class="desc">Webhook / Telegram</text>
 
-  <rect x="240" y="60" width="160" height="200" class="stage"/>
+  <rect x="240" y="60" width="160" height="200" rx="14" ry="14" class="stage"/>
   <text x="260" y="110" class="label">AI OCR</text>
   <text x="260" y="140" class="desc">OpenRouter</text>
   <text x="260" y="165" class="desc">Claude 3.5 Sonnet</text>
   <text x="260" y="190" class="desc">Strict JSON schema</text>
 
-  <rect x="440" y="80" width="160" height="160" class="stage"/>
+  <rect x="440" y="80" width="160" height="160" rx="14" ry="14" class="stage"/>
   <text x="460" y="120" class="label">Archive</text>
   <text x="460" y="150" class="desc">Cloudflare R2</text>
   <text x="460" y="175" class="desc">Google Drive/Sheets</text>
 
-  <rect x="640" y="40" width="200" height="220" class="stage"/>
+  <rect x="640" y="40" width="200" height="220" rx="14" ry="14" class="stage"/>
   <text x="660" y="90" class="label">Insights</text>
   <text x="660" y="120" class="desc">Prisma + Postgres</text>
   <text x="660" y="145" class="desc">Metrics & KPIs</text>

@@ -1,6 +1,6 @@
 <svg width="900" height="360" viewBox="0 0 900 360" xmlns="http://www.w3.org/2000/svg" style="font-family:'Inter',sans-serif;background:#fff8f0">
   <style>
-    .step { fill:#fff; stroke:#2a3a68; stroke-width:2; rx:20; }
+    .step { fill:#fff; stroke:#2a3a68; stroke-width:2; }
     .title { font-size:18px; font-weight:600; fill:#2a3a68; }
     .desc { font-size:14px; fill:#4e3b31; }
     .progress { stroke:#ff8c42; stroke-width:12; stroke-linecap:round; }
@@ -11,19 +11,19 @@
   <line x1="80" y1="90" x2="620" y2="90" class="progress"/>
 
   <g transform="translate(80,120)">
-    <rect width="220" height="140" class="step"/>
+    <rect width="220" height="140" rx="20" ry="20" class="step"/>
     <text x="20" y="35" class="title">1. Upload</text>
     <text x="20" y="70" class="desc">Camera / email attachment arrives.</text>
     <text x="20" y="95" class="desc">Progress: 10%</text>
   </g>
   <g transform="translate(340,120)">
-    <rect width="220" height="140" class="step"/>
+    <rect width="220" height="140" rx="20" ry="20" class="step"/>
     <text x="20" y="35" class="title">2. AI Analysis</text>
     <text x="20" y="70" class="desc">Claude OCR + JSON cleaning.</text>
     <text x="20" y="95" class="desc">Progress: 45%</text>
   </g>
   <g transform="translate(600,120)">
-    <rect width="220" height="140" class="step"/>
+    <rect width="220" height="140" rx="20" ry="20" class="step"/>
     <text x="20" y="35" class="title">3. Archive & Notify</text>
     <text x="20" y="70" class="desc">R2 + Sheets + Telegram/Email.</text>
     <text x="20" y="95" class="desc">Progress: 90% ➜ 100%</text>
