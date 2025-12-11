@@ -24,7 +24,7 @@
   </g>
   <g transform="translate(600,120)">
     <rect width="220" height="140" rx="20" ry="20" class="step"/>
-    <text x="20" y="35" class="title">3. Archive & Notify</text>
+    <text x="20" y="35" class="title">3. Archive &amp; Notify</text>
     <text x="20" y="70" class="desc">R2 + Sheets + Telegram/Email.</text>
     <text x="20" y="95" class="desc">Progress: 90% ➜ 100%</text>
   </g>

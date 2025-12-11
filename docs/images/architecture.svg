@@ -24,13 +24,13 @@
   <text x="360" y="320" class="body">• Prisma + Postgres</text>
 
   <rect x="640" y="40" width="220" height="140" rx="16" ry="16" class="card"/>
-  <text x="660" y="80" class="title">Storage & Archives</text>
+  <text x="660" y="80" class="title">Storage &amp; Archives</text>
   <text x="660" y="110" class="body">• Cloudflare R2</text>
   <text x="660" y="135" class="body">• Google Drive/Sheets</text>
   <text x="660" y="160" class="body">• Monthly folders/tabs</text>
 
   <rect x="640" y="260" width="220" height="160" rx="16" ry="16" class="card"/>
-  <text x="660" y="300" class="title">Intelligence & UX</text>
+  <text x="660" y="300" class="title">Intelligence &amp; UX</text>
   <text x="660" y="330" class="body">• OpenRouter (Claude/Grok)</text>
   <text x="660" y="355" class="body">• React V1 Hand-drawn UI</text>
   <text x="660" y="380" class="body">• React Admin Dashboard</text>

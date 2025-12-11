@@ -30,7 +30,7 @@
   <rect x="640" y="40" width="200" height="220" rx="14" ry="14" class="stage"/>
   <text x="660" y="90" class="label">Insights</text>
   <text x="660" y="120" class="desc">Prisma + Postgres</text>
-  <text x="660" y="145" class="desc">Metrics & KPIs</text>
+  <text x="660" y="145" class="desc">Metrics &amp; KPIs</text>
   <text x="660" y="170" class="desc">Grok finance expert</text>
   <text x="660" y="195" class="desc">Email + Telegram</text>
 
