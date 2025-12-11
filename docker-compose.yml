@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-receipt_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-receipt_pass}
+      POSTGRES_DB: ${POSTGRES_DB:-receipt_ai}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-receipt_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - env.docker.example
+      - server/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://receipt_user:receipt_pass@postgres:5432/receipt_ai}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["worker"]
+    env_file:
+      - env.docker.example
+      - server/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://receipt_user:receipt_pass@postgres:5432/receipt_ai}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_BASE_URL=${FRONTEND_API_BASE:-http://server:3001}
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+
+volumes:
+  pgdata:
+

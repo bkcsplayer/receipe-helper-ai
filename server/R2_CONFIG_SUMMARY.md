@@ -1,0 +1,16 @@
+## Cloudflare R2 Storage Configuration (for Receipt-App)
+
+| Key                     | Value                                                                |
+|-------------------------|----------------------------------------------------------------------|
+| R2_ENDPOINT             | https://13d95a6118afeff3b4a48be9f1812815.r2.cloudflarestorage.com    |
+| R2_ACCESS_KEY_ID        | a3d492e9efdf67eaac25f13493ad7c17                                      |
+| R2_SECRET_ACCESS_KEY    | 91b109975901831a0be5ad7f90fb2c87d3ef8c5c70020ba6a2a69ba7a53f1ea6      |
+| R2_BUCKET_NAME          | receipt-app-images                                                    |
+| R2_REGION               | auto                                                                  |
+| R2_PUBLIC_DOMAIN        | https://pub-3797f686e2f44adbbf2b7285ab2839c5.r2.dev                   |
+| R2_UPLOAD_PATH (example)| receipts                                                               |
+
+> Copy these values into your `server/.env` file (or infrastructure secrets store) so the backend uses Cloudflare R2 instead of Google Drive for storing receipt images.
+
+
+

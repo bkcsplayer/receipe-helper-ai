@@ -1,0 +1,14 @@
+node_modules
+dist
+tmp
+.git
+.gitignore
+.cursor
+.vscode
+Dockerfile*
+docker-compose.yml
+*.log
+server/node_modules
+apps/admin/node_modules
+apps/admin/dist
+

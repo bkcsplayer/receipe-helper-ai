@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ReceiptSource {
+  WEB
+  EMAIL
+  TELEGRAM
+  API
+}
+
+enum EmailJobStatus {
+  pending
+  generating
+  sending
+  sent
+  failed
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  passwordHash  String?
+  role          String   @default("owner")
+  telegramChatId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Vehicle {
+  id            String   @id @default(cuid())
+  label         String
+  plateNumber   String?
+  vin           String?
+  purchaseDate  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  receipts      Receipt[]
+}
+
+model Receipt {
+  id             String         @id @default(cuid())
+  legacyId       String?        @unique
+  storeName      String
+  storeLocation  String?
+  category       String?
+  transactionDate DateTime
+  totalAmount    Decimal        @db.Decimal(18, 4)
+  taxAmount      Decimal        @db.Decimal(18, 4) @default(0)
+  currency       String         @default("USD")
+  status         String         @default("completed")
+  source         ReceiptSource
+  fileUrl        String?
+  sheetRowId     String?
+  distanceKm     Decimal?       @db.Decimal(18, 4)
+  meta           Json?
+  rawPayload     Json?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  vehicle        Vehicle?       @relation(fields: [vehicleId], references: [id])
+  vehicleId      String?
+  items          ReceiptItem[]
+}
+
+model ReceiptItem {
+  id         String   @id @default(cuid())
+  receipt    Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  receiptId  String
+  name       String
+  category   String?
+  quantity   Decimal? @db.Decimal(18, 4)
+  unitPrice  Decimal? @db.Decimal(18, 4)
+  totalPrice Decimal? @db.Decimal(18, 4)
+  isEstimated Boolean  @default(false)
+  tags       String[]
+  meta       Json?
+  createdAt  DateTime @default(now())
+}
+
+model MetricMonthly {
+  id          String   @id @default(cuid())
+  month       String   @db.VarChar(7)
+  metricKey   String
+  valueNumeric Decimal? @db.Decimal(24, 8)
+  valueText   String?
+  valueJson   Json?
+  unit        String?
+  meta        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([month, metricKey])
+}
+
+model IndicatorDefinition {
+  id          String   @id @default(cuid())
+  metricKey   String   @unique
+  label       String
+  description String?
+  unit        String?
+  calculation Json?
+  isEnabled   Boolean  @default(true)
+  meta        Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AnalysisReport {
+  id           String   @id @default(cuid())
+  month        String   @db.VarChar(7)
+  model        String
+  role         String?
+  summaryText  String
+  recommendations Json
+  vehicleInsights Json?
+  spendingBreakdown Json?
+  rawResponse  Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([month, model])
+}
+
+model EmailJob {
+  id          String        @id @default(cuid())
+  month       String        @db.VarChar(7)
+  status      EmailJobStatus @default(pending)
+  error       String?
+  sentAt      DateTime?
+  payload     Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([month, status])
+}
+

@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Inter:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+body {
+    @apply bg-paper text-ink font-sans antialiased;
+    background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-hand text-ink-dark font-bold;
+  }
+}
+
+@layer components {
+  .btn-hand {
+    @apply px-6 py-3 font-hand text-xl font-bold rounded-lg border-2 border-ink transition-all duration-200 active:translate-x-0.5 active:translate-y-0.5 active:shadow-none shadow-hand hover:-translate-y-0.5 hover:shadow-hand-hover bg-white text-ink;
+  }
+  
+  .card-hand {
+    @apply bg-white border-2 border-ink rounded-xl shadow-hand p-4 relative overflow-hidden;
+}
+
+  .input-hand {
+    @apply w-full bg-transparent border-b-2 border-ink px-2 py-2 font-hand text-lg focus:outline-none focus:border-brand-blue transition-colors placeholder-ink/50;
+  }
+}
