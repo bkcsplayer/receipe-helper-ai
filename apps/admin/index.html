@@ -1,10 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>admin</title>
+    <meta name="theme-color" content="#2A3A68" />
+    <meta name="description" content="Receipt Manifestation Admin - Financial Intelligence Dashboard" />
+    
+    <!-- Preconnect to Google Fonts for faster loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Load fonts with display swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Patrick+Hand&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    
+    <title>Future Frontier Admin | Receipt Intelligence</title>
+    
+    <style>
+      /* Critical CSS for first paint */
+      body {
+        margin: 0;
+        background-color: #F8F4EC;
+        font-family: 'Inter', system-ui, sans-serif;
+      }
+      
+      /* Loading state */
+      #root:empty::before {
+        content: '💰';
+        font-size: 48px;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

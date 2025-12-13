@@ -1,98 +1,310 @@
-# Receipt Manifestation App
+# Receipt Manifestation App - Personal Finance Intelligence
 
-A high-fidelity mobile web application for managing receipts with a bold, hand-drawn "Manifestation" aesthetic. It serves as a "Digital Altar" for your financial data, transforming chaos into structured abundance.
+A comprehensive personal finance management system with AI-powered receipt OCR, financial analysis, and automated reporting. Transform your receipts, invoices, and paychecks into actionable financial insights.
 
 ## 🌟 Features
 
-*   **Hand-Drawn UI**: Organic textures, sketchy borders, and a warm, paper-like atmosphere.
-*   **Receipt Capture**: "Tarot Card" style upload interface.
-*   **AI Intelligence**: Uses **OpenRouter (Claude 3.5 Sonnet)** for high-precision OCR and data extraction.
-*   **Multi-Channel Input**:
-    *   📸 **Web Upload**: Direct photo upload from mobile/desktop.
-    *   📧 **Email Listening**: Automatically scans inbox for receipt attachments (IMAP).
-*   **Cloud Archiving**:
-    *   🖼️ Original files saved to **Google Drive**.
-    *   📊 Structured data recorded in **Google Sheets**.
+### Core Functionality
+- **📸 Receipt Capture**: Upload photos or PDFs via web interface
+- **📧 Email Listening**: Auto-scan inbox for receipt attachments (IMAP)
+- **💳 Paycheck Analysis**: Parse paystubs to track income, deductions, and taxes
+- **🏦 Bank Statement Support**: Import credit card and bank statements
+- **🤖 AI-Powered OCR**: Uses **Claude 3.5 Sonnet** via OpenRouter for accurate data extraction
+
+### Financial Analysis
+- **📊 Dashboard**: Real-time spending trends, category breakdowns, merchant rankings
+- **💰 Income vs Expense**: Track cash flow, savings rate, and net worth
+- **💳 Payment Method Tracking**: Monitor credit card usage and rewards optimization
+- **📅 Date Range Filters**: Analyze any time period (day, month, quarter, year)
+- **🎯 Budget Tracking**: Set and monitor budgets by category
+
+### AI Intelligence
+- **🧠 Financial Analysis**: Monthly AI-generated insights and recommendations
+- **💡 Savings Opportunities**: Identify "convenience tax" and subscription creep
+- **🛡️ Tax Strategy**: Flag tax-deductible expenses
+- **📧 Email Reports**: Automated weekly/monthly HTML reports
+
+### System Features
+- **🖥️ Admin Dashboard**: Full back-office with React Admin
+- **📊 Data Flow Visualization**: Real-time system status and pipeline monitoring
+- **🧪 Test Data Management**: One-click mock data for testing
+- **🔄 Token Tracking**: Monitor AI usage and costs
+
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        DATA SOURCES                              │
+├─────────────────────────────────────────────────────────────────┤
+│  📧 Email Inbox         📸 Web Upload        🏦 Bank Sync        │
+│  (IMAP Listener)        (React Frontend)    (Coming Soon)       │
+│        │                       │                  │              │
+│        └───────────┬───────────┴──────────────────┘              │
+│                    ▼                                             │
+├─────────────────────────────────────────────────────────────────┤
+│                   🤖 AI PROCESSING                               │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ OpenRouter API (Claude 3.5 Sonnet)                      │    │
+│  │ • OCR & Data Extraction                                 │    │
+│  │ • Document Classification (Receipt/Invoice/Paycheck)   │    │
+│  │ • Category & Merchant Recognition                       │    │
+│  │ • Financial Analysis & Recommendations                  │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                    │                                             │
+│                    ▼                                             │
+├─────────────────────────────────────────────────────────────────┤
+│                   📦 DATA STORAGE                                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐       │
+│  │ PostgreSQL   │  │ Cloudflare   │  │ Google Sheets    │       │
+│  │ (Receipts,   │  │ R2           │  │ (Ledger)         │       │
+│  │  Metrics,    │  │ (File        │  │                  │       │
+│  │  Analysis)   │  │  Archive)    │  │                  │       │
+│  └──────────────┘  └──────────────┘  └──────────────────┘       │
+│                    │                                             │
+│                    ▼                                             │
+├─────────────────────────────────────────────────────────────────┤
+│                   📊 OUTPUT & NOTIFICATIONS                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐       │
+│  │ Admin        │  │ Email        │  │ Telegram         │       │
+│  │ Dashboard    │  │ Reports      │  │ Notifications    │       │
+│  └──────────────┘  └──────────────┘  └──────────────────┘       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 📧 Email Configuration
+
+### Receipt Inbox (IMAP)
+The system listens to a dedicated email inbox for receipt attachments.
+
+**Recommended Setup:**
+```
+Email: receipts@yourdomain.com
+Purpose: Forward all digital receipts here
+```
+
+**Environment Variables:**
+```env
+# Email Inbox (for receiving receipts)
+IMAP_USER=receipts@yourdomain.com
+IMAP_PASSWORD=your-email-password
+IMAP_HOST=imap.yourdomain.com
+IMAP_PORT=993
+IMAP_TLS=true
+```
+
+### Report Delivery (SMTP)
+Financial reports are sent via SMTP.
+
+```env
+# Email Sending (for reports)
+SMTP_HOST=smtp.yourdomain.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=reports@yourdomain.com
+SMTP_PASSWORD=your-smtp-password
+
+# Report Recipients
+EMAIL_FROM=reports@yourdomain.com
+EMAIL_REPORT_TO=you@yourdomain.com
+```
 
 ## 🛠️ Tech Stack
 
-*   **Frontend**: React (Vite), Tailwind CSS, Framer Motion
-*   **Backend**: Node.js, Express
-*   **Integrations**: OpenRouter API, Google Drive API, Google Sheets API, IMAP
+| Component | Technology |
+|-----------|------------|
+| **Frontend** | React, Vite, Tailwind CSS, Framer Motion |
+| **Admin Panel** | React Admin, Material UI, Recharts |
+| **Backend** | Node.js, Express |
+| **Database** | PostgreSQL, Prisma ORM |
+| **AI** | OpenRouter (Claude 3.5 Sonnet) |
+| **Storage** | Cloudflare R2, Google Drive |
+| **Ledger** | Google Sheets |
+| **Email** | IMAP (inbox), Nodemailer (outbox) |
+| **Notifications** | Telegram Bot API |
+| **Deployment** | Docker, Docker Compose |
 
-## 🚀 Getting Started (V1)
+## 🚀 Quick Start
 
-1.  **Install Dependencies**:
-    ```bash
-    npm install
-    ```
+### Prerequisites
+- Node.js 20+
+- Docker & Docker Compose
+- PostgreSQL (or use Docker)
+- OpenRouter API Key
+- Google Cloud Service Account
 
-2.  **Configuration**:
-    *   Copy `server/env.example` to `server/.env`.
-    *   Fill in your `OPENROUTER_API_KEY`, Google Credentials, and Email settings.
+### Development Setup
 
-3.  **Run the App**:
-    ```bash
-    npm run dev
-    ```
-    This starts both the frontend (`http://localhost:5173`) and backend (`http://localhost:3001`).
+```bash
+# 1. Clone repository
+git clone https://github.com/yourrepo/receipt-helper-ai.git
+cd receipt-helper-ai
 
-## ⚙️ V2 Upgrade Snapshot
+# 2. Install dependencies
+npm install
+cd server && npm install
+cd ../apps/admin && npm install
 
-The V2 release introduces:
+# 3. Configure environment
+cp server/env.example server/.env
+# Edit server/.env with your credentials
 
-- **PostgreSQL + Prisma** for long-term data retention, metrics, and AI-ready datasets.
-- **Indicator Engine** so you can define or disable KPIs (fuel/100km, maintenance/100km, recurring payments, etc.).
-- **React Admin Back-Office** (`apps/admin`) with dashboards, vehicle insights, and AI reports.
-- **AI Finance Expert** powered by OpenRouter (Claude + Grok) to generate monthly recommendations and email summaries.
-- **Dockerized Deployment** via `docker-compose` (server + worker + Postgres + admin/frontend).
+# 4. Start PostgreSQL (Docker)
+docker compose up -d postgres
 
-All new environment variables live in `server/env.example` (runtime) and `env.docker.example` (compose defaults). Copy them to `.env` / `server/.env` before running.
+# 5. Run migrations
+cd server && npm run prisma:migrate
 
-### Visual Overview
+# 6. Start development servers
+npm run dev  # Frontend + Backend
+cd apps/admin && npm run dev  # Admin panel
+```
 
-<table>
-  <tr>
-    <th>Architecture</th>
-    <th>Pipeline</th>
-    <th>Admin Dashboard</th>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/architecture.png" width="240" alt="Architecture diagram"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/pipeline.png" width="240" alt="Pipeline diagram"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/dashboard.png" width="420" alt="Admin dashboard mock"/></td>
-  </tr>
-  <tr>
-    <th>Mobile Upload + Email</th>
-    <th>SSE Progress</th>
-    <th>System Health</th>
-  </tr>
-  <tr>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/mobile-upload.png" width="260" alt="Mobile upload illustration"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/progress.png" width="260" alt="SSE progress illustration"/></td>
-    <td align="center"><img src="https://raw.githubusercontent.com/bkcsplayer/receipe-helper-ai/main/docs/images/system-health.png" width="320" alt="System health illustration"/></td>
-  </tr>
-</table>
+### Docker Deployment
 
-### Admin Console
+```bash
+# 1. Configure environment
+cp env.docker.example .env
+cp server/env.example server/.env
+# Edit both files with your credentials
 
-- Source code: `apps/admin`
-- Development: `cd apps/admin && npm run dev` (defaults to `http://localhost:5173`)
-- Build output: `apps/admin/dist` (served by Docker `frontend-admin` service in future iterations)
-- Requires `VITE_API_BASE_URL` (inherit from root `.env.production`) so it can reach `/api/v2/*`.
+# 2. Build and start all services
+docker compose up -d --build
 
-### Docker Quick Start
+# 3. Run database migrations
+docker compose exec server npx prisma db push
 
-1. `cp env.docker.example .env` and edit values (API base URL, SMTP, etc.).
-2. `cp server/env.example server/.env` (or create a clean secret file).
-3. `docker compose up -d --build`.
-4. API will listen on `http://localhost:3001`, frontend on `http://localhost:8080`.
-5. Seed & import helpers:
-   - `docker compose run --rm server npm run prisma:migrate`
-   - `docker compose run --rm server npm run seed`
-   - `docker compose run --rm server npm run import:lowdb`
+# 4. (Optional) Seed test data
+docker compose exec server npm run seed:comprehensive
+```
 
-## 🔮 Design System
+### Access Points
 
-*   **Font**: 'Patrick Hand' (Headers), 'Inter' (Body)
-*   **Colors**: Paper White (`#F8F4EC`), Ink Brown (`#4E3B31`), Vitality Orange (`#FF8C42`).
+| Service | URL | Description |
+|---------|-----|-------------|
+| Frontend | `https://receipe2.khtain.com` | User-facing receipt upload |
+| Admin | `https://receipe2admin.khtain.com` | Dashboard & Analytics |
+| API | `http://localhost:3001` | REST API |
+
+**Local Development:**
+| Service | URL |
+|---------|-----|
+| Frontend | `http://localhost:8080` |
+| Admin | `http://localhost:8082` |
+| API | `http://localhost:3001` |
+
+## 📊 Data Model
+
+### Transaction Types
+- `EXPENSE` - Regular spending
+- `INCOME` - Salary, dividends, freelance
+- `TRANSFER` - Between accounts
+- `REFUND` - Returns and refunds
+
+### Document Types
+- `RECEIPT` - Store receipts
+- `INVOICE` - Bills and invoices
+- `PAYCHECK` - Salary/pay stubs
+- `BANK_STATEMENT` - Bank statements
+- `CREDIT_CARD_STATEMENT` - CC statements
+- `BILL` - Utility bills
+
+### Expense Categories
+```
+Housing:        Mortgage, Rent, Utilities, HOA, Insurance
+Transportation: Car Payment, Gas, Insurance, Parking, Rideshare
+Food:           Groceries, Dining Out, Delivery, Coffee
+Healthcare:     Insurance, Doctor, Pharmacy, Dental
+Entertainment:  Streaming, Games, Movies, Gym
+Shopping:       Online, Retail, Electronics, Clothing
+Subscriptions:  Software, Phone, Memberships
+Financial:      Bank Fees, Interest, Investments
+```
+
+### Payment Methods
+- Credit Cards (with card name/last4)
+- Debit Cards
+- Bank Transfer / ACH
+- Cash
+- Digital Wallets (Apple Pay, PayPal, Venmo)
+- Auto-pay / Payroll
+
+## 🧪 Testing
+
+### Mock Data
+The system includes comprehensive mock data generation for testing:
+
+```bash
+# Generate 3 months of realistic test data
+docker compose exec server npm run seed:comprehensive
+
+# Delete all mock data
+docker compose exec server npm run mock:delete
+
+# Reset (delete + regenerate)
+docker compose exec server npm run mock:reset
+```
+
+Mock data includes:
+- Bi-weekly paychecks with deductions
+- Monthly bills (mortgage, utilities, subscriptions)
+- Variable expenses (groceries, dining, shopping)
+- Investment income
+- Multiple payment methods
+
+### Admin Dashboard Controls
+- Navigate to **System** tab
+- Click **Add Mock Data** or **Delete Mock Data**
+- View real-time data flow and system status
+
+## 📁 Project Structure
+
+```
+receipe-helper-ai/
+├── apps/
+│   └── admin/              # React Admin dashboard
+│       ├── src/
+│       │   ├── components/
+│       │   │   ├── dashboard/
+│       │   │   │   ├── OverviewDashboard.jsx
+│       │   │   │   └── SystemStatusPanel.jsx
+│       │   │   ├── ReceiptList.jsx
+│       │   │   └── ReceiptShow.jsx
+│       │   └── lib/
+│       │       └── api.js
+│       └── Dockerfile
+├── server/
+│   ├── prisma/
+│   │   └── schema.prisma   # Database schema
+│   ├── scripts/
+│   │   ├── seed-comprehensive-mock.js
+│   │   └── import-lowdb.js
+│   ├── services/
+│   │   ├── receiptService.js
+│   │   ├── metricsService.js
+│   │   ├── analysisService.js
+│   │   └── emailService.js
+│   ├── index.js            # Express API server
+│   └── worker.js           # Background job processor
+├── src/                    # User-facing frontend
+├── docker-compose.yml
+└── README.md
+```
+
+## 🔐 Security Notes
+
+- Never commit `.env` files
+- Use strong passwords for email accounts
+- Rotate API keys regularly
+- Use service accounts for Google APIs
+- Enable 2FA on all integrations
+
+## 📄 License
+
+MIT License - See LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- [OpenRouter](https://openrouter.ai/) for AI API access
+- [Anthropic Claude](https://anthropic.com/) for OCR intelligence
+- [React Admin](https://marmelab.com/react-admin/) for admin framework
+- [Prisma](https://prisma.io/) for database ORM

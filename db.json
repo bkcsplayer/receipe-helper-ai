@@ -1,1 +1,62 @@
-﻿{"receipts":[]}
+{
+    "receipts": [
+      {
+        "id": 1764107625677,
+        "store_name": "Home Depot",
+        "store_location": "Atlanta GA",
+        "date": "2013-06-15",
+        "total_amount": 32.3,
+        "tax_amount": 1.83,
+        "items": [
+          {
+            "name": "RYOBI 31-PC TITANIUM DRILL/DRIVE KIT",
+            "price": 10.97
+          },
+          {
+            "name": "DYNAWHIT.5",
+            "price": 3.98
+          },
+          {
+            "name": "5GAL BLACK REUSABLE BUCKET LID",
+            "price": 1.28
+          },
+          {
+            "name": "BT25/30PK",
+            "price": 6.99
+          },
+          {
+            "name": "1GPH MAN",
+            "price": 3.98
+          },
+          {
+            "name": "HOMER BUCKET",
+            "price": 2.6
+          },
+          {
+            "name": "RISER EXTNDR",
+            "price": 0.67
+          }
+        ],
+        "source": "Web Upload",
+        "driveLink": "https://pub-3797f686e2f44adbbf2b7285ab2839c5.r2.dev/2013-06/2013-06-15_Atlanta_GA_Home_Depot_32.3_1764107622752.jpg",
+        "status": "completed"
+      },
+      {
+        "id": 1764107698774,
+        "store_name": "Shell Canada",
+        "store_location": "291 SAKITAWAW TRAIL, FORT MCMURRAY, AB T9H 5E7",
+        "date": "2025-11-20",
+        "total_amount": 60,
+        "tax_amount": 2.86,
+        "items": [
+          {
+            "name": "REGULAR FUEL",
+            "price": 60
+          }
+        ],
+        "source": "Email",
+        "driveLink": "https://pub-3797f686e2f44adbbf2b7285ab2839c5.r2.dev/2025-11/email_1764107697143.html",
+        "status": "completed"
+      }
+    ]
+  }

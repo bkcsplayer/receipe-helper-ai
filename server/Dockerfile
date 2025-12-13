@@ -6,6 +6,8 @@ RUN npm install
 
 COPY prisma ./prisma
 COPY scripts ./scripts
+COPY services ./services
+COPY worker.js ./
 COPY index.js ./
 COPY gcs-helper.js ./
 COPY db.json ./db.json

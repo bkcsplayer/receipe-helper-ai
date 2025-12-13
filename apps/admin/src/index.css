@@ -1,9 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Patrick+Hand&display=swap');
+
 :root {
+  --primary: #2A3A68;
+  --primary-light: #3D5291;
+  --secondary: #FF8C42;
+  --accent: #F4C95D;
+  --success: #4CAF50;
+  --warning: #FFC107;
+  --error: #F44336;
+  --bg-main: #F8F4EC;
+  --bg-paper: #FFFFFF;
+  --text-primary: #4E3B31;
+  --text-secondary: rgba(78, 59, 49, 0.7);
+  
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.6;
   font-weight: 400;
-  color: #2a3a68;
-  background-color: #f8f4ec;
+  color: var(--text-primary);
+  background-color: var(--bg-main);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -17,5 +31,69 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #f8f4ec;
+  background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(at 20% 30%, rgba(42, 58, 104, 0.03) 0%, transparent 50%),
+    radial-gradient(at 80% 70%, rgba(255, 140, 66, 0.03) 0%, transparent 50%);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(42, 58, 104, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(42, 58, 104, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(42, 58, 104, 0.3);
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Spin animation for loading indicators */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.fa-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Focus states for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+/* Better table styling */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(255, 140, 66, 0.3);
+  color: var(--text-primary);
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
 }

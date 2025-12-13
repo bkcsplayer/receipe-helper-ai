@@ -3,7 +3,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.33.1",
     "@aws-sdk/client-s3": "^3.670.0",
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "^6.19.1",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -23,7 +23,12 @@
     "prisma:generate": "prisma generate",
     "prisma:dev": "prisma migrate dev",
     "prisma:migrate": "prisma migrate deploy",
+    "prisma:push": "prisma db push",
     "seed": "node prisma/seed.js",
+    "seed:mock": "node scripts/seed-mock-data.js",
+    "seed:comprehensive": "node scripts/seed-comprehensive-mock.js seed",
+    "mock:delete": "node scripts/seed-comprehensive-mock.js delete",
+    "mock:reset": "node scripts/seed-comprehensive-mock.js reset",
     "import:lowdb": "node scripts/import-lowdb.js"
   },
   "devDependencies": {

@@ -889,7 +889,7 @@ const startEmailWatcher = () => {
   setTimeout(poll, 5000);
 };
 
-startEmailWatcher();
+// startEmailWatcher(); // Temporarily disabled for debugging
 
 // Configure Multer
 const upload = multer({ 
@@ -917,15 +917,24 @@ app.get('/api/receipts', async (req, res) => {
   res.json(sorted);
 });
 
-// V2 Receipts (Postgres)
+// V2 Receipts (Postgres) - Supports date range filtering
 app.get('/api/v2/receipts', async (req, res) => {
   const page = Number(req.query.page || 1);
-  const pageSize = Math.min(Number(req.query.pageSize || 20), 100);
-  const month = req.query.month;
-  const category = req.query.category;
+  const pageSize = Math.min(Number(req.query.pageSize || 20), 1000); // Allow larger page sizes for analytics
+  const { month, category, startDate, endDate, storeName, source, type } = req.query;
 
   try {
-    const result = await listReceiptsV2({ page, pageSize, month, category });
+    const result = await listReceiptsV2({ 
+      page, 
+      pageSize, 
+      month, 
+      category,
+      startDate,
+      endDate,
+      storeName,
+      source,
+      type
+    });
     res.json({
       ...result,
       data: result.data.map(serializeReceipt)
@@ -1191,6 +1200,200 @@ async function validateConfig() {
 
   console.log('----------------------------------------\n');
   return !hasIssues;
+}
+
+// ===== MOCK DATA MANAGEMENT APIs =====
+
+// Get mock data status
+app.get('/api/v2/mock-data/status', async (req, res) => {
+  try {
+    const { prisma } = await import('./services/prisma.js');
+    
+    const [mockCount, realCount, totalCount] = await Promise.all([
+      prisma.receipt.count({ where: { isMockData: true } }),
+      prisma.receipt.count({ where: { isMockData: false } }),
+      prisma.receipt.count()
+    ]);
+    
+    res.json({
+      mockDataCount: mockCount,
+      realDataCount: realCount,
+      totalCount,
+      hasMockData: mockCount > 0
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Seed mock data
+app.post('/api/v2/mock-data/seed', async (req, res) => {
+  try {
+    const { execSync } = await import('child_process');
+    execSync('node scripts/seed-comprehensive-mock.js seed', { 
+      cwd: process.cwd(),
+      stdio: 'inherit'
+    });
+    res.json({ success: true, message: 'Mock data seeded successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete mock data
+app.delete('/api/v2/mock-data', async (req, res) => {
+  try {
+    const { prisma } = await import('./services/prisma.js');
+    
+    const result = await prisma.receipt.deleteMany({
+      where: { isMockData: true }
+    });
+    
+    // Clean up related data
+    await prisma.metricMonthly.deleteMany({});
+    await prisma.analysisReport.deleteMany({});
+    
+    res.json({ 
+      success: true, 
+      message: `Deleted ${result.count} mock receipts`,
+      deletedCount: result.count
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===== SYSTEM STATUS APIs =====
+
+// Get system configuration and status
+app.get('/api/v2/system/status', async (req, res) => {
+  try {
+    const { prisma } = await import('./services/prisma.js');
+    
+    // Check database connection
+    let dbStatus = 'connected';
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch {
+      dbStatus = 'disconnected';
+    }
+    
+    // Get AI processing stats
+    let aiStats = { totalCalls: 0, totalTokens: 0, totalCost: 0 };
+    try {
+      const logs = await prisma.aIProcessingLog.aggregate({
+        _sum: { totalTokens: true, inputTokens: true, outputTokens: true },
+        _count: true,
+      });
+      aiStats = {
+        totalCalls: logs._count,
+        totalTokens: logs._sum.totalTokens || 0,
+        inputTokens: logs._sum.inputTokens || 0,
+        outputTokens: logs._sum.outputTokens || 0,
+      };
+    } catch {
+      // Table might not exist yet
+    }
+    
+    // Get receipt counts by source
+    const receiptsBySource = await prisma.receipt.groupBy({
+      by: ['source'],
+      _count: true
+    });
+    
+    // Get recent processing activity
+    const recentReceipts = await prisma.receipt.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, storeName: true, source: true, createdAt: true, totalAmount: true }
+    });
+    
+    res.json({
+      server: {
+        status: 'running',
+        port: PORT,
+        uptime: process.uptime(),
+        nodeVersion: process.version,
+        memoryUsage: process.memoryUsage(),
+      },
+      database: {
+        status: dbStatus,
+        type: 'PostgreSQL',
+      },
+      integrations: {
+        cloudflareR2: {
+          enabled: isR2Enabled(),
+          bucket: r2Config.bucket || null,
+        },
+        googleDrive: {
+          enabled: Boolean(process.env.GOOGLE_DRIVE_FOLDER_ID),
+          folderId: process.env.GOOGLE_DRIVE_FOLDER_ID || null,
+        },
+        googleSheets: {
+          enabled: Boolean(process.env.GOOGLE_SHEET_ID),
+          sheetId: process.env.GOOGLE_SHEET_ID || null,
+        },
+        telegram: {
+          enabled: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+        },
+        email: {
+          enabled: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER),
+          inboxEmail: process.env.IMAP_USER || null,
+        },
+        openRouter: {
+          enabled: Boolean(process.env.OPENROUTER_API_KEY),
+          model: 'anthropic/claude-3.5-sonnet',
+        },
+      },
+      ai: aiStats,
+      dataFlow: {
+        sources: receiptsBySource.map(s => ({ source: s.source, count: s._count })),
+        recentActivity: recentReceipts,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get AI processing logs
+app.get('/api/v2/system/ai-logs', async (req, res) => {
+  try {
+    const { prisma } = await import('./services/prisma.js');
+    const limit = Math.min(Number(req.query.limit) || 50, 200);
+    
+    const logs = await prisma.aIProcessingLog.findMany({
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message, logs: [] });
+  }
+});
+
+// Log AI processing (internal use)
+async function logAIProcessing({ operation, model, inputTokens, outputTokens, durationMs, status, errorMessage, receiptId, meta }) {
+  try {
+    const { prisma } = await import('./services/prisma.js');
+    await prisma.aIProcessingLog.create({
+      data: {
+        operation,
+        model: model || 'anthropic/claude-3.5-sonnet',
+        inputTokens: inputTokens || 0,
+        outputTokens: outputTokens || 0,
+        totalTokens: (inputTokens || 0) + (outputTokens || 0),
+        durationMs,
+        status: status || 'success',
+        errorMessage,
+        receiptId,
+        meta,
+      }
+    });
+  } catch (err) {
+    console.error('Failed to log AI processing:', err.message);
+  }
 }
 
 // Initialize DB and Start Server

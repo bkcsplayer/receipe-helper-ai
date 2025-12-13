@@ -85,17 +85,45 @@ export async function saveReceiptToDatabase(payload) {
   });
 }
 
-export async function listReceipts({ page = 1, pageSize = 20, month, category: filterCategory }) {
+export async function listReceipts({ 
+  page = 1, 
+  pageSize = 20, 
+  month, 
+  category: filterCategory,
+  startDate,
+  endDate,
+  storeName,
+  source,
+  type
+}) {
   const skip = (page - 1) * pageSize;
   const where = {};
-  if (month) {
+  
+  // Date range filtering - supports either month OR startDate/endDate
+  if (startDate && endDate) {
+    where.transactionDate = {
+      gte: new Date(`${startDate}T00:00:00Z`),
+      lte: new Date(`${endDate}T23:59:59Z`)
+    };
+  } else if (month) {
     const start = new Date(`${month}-01T00:00:00Z`);
     const end = new Date(start);
     end.setMonth(end.getMonth() + 1);
     where.transactionDate = { gte: start, lt: end };
   }
+  
+  // Additional filters
   if (filterCategory) {
     where.category = filterCategory;
+  }
+  if (storeName) {
+    where.storeName = { contains: storeName, mode: 'insensitive' };
+  }
+  if (source) {
+    where.source = source;
+  }
+  if (type) {
+    where.type = type;
   }
 
   const [total, rows] = await Promise.all([

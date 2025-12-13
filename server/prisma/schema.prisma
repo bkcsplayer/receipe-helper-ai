@@ -7,11 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ===== ENUMS =====
+
 enum ReceiptSource {
   WEB
   EMAIL
   TELEGRAM
   API
+  BANK_SYNC
+  MANUAL
+}
+
+enum TransactionType {
+  EXPENSE
+  INCOME
+  TRANSFER
+  REFUND
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  CASH
+  BANK_TRANSFER
+  PAYPAL
+  VENMO
+  APPLE_PAY
+  GOOGLE_PAY
+  CHECK
+  CRYPTO
+  PAYROLL
+  AUTO_PAY
+  OTHER
 }
 
 enum EmailJobStatus {
@@ -21,6 +48,19 @@ enum EmailJobStatus {
   sent
   failed
 }
+
+enum DocumentType {
+  RECEIPT
+  INVOICE
+  PAYCHECK
+  BANK_STATEMENT
+  CREDIT_CARD_STATEMENT
+  BILL
+  TAX_DOCUMENT
+  OTHER
+}
+
+// ===== MODELS =====
 
 model User {
   id            String   @id @default(cuid())
@@ -44,56 +84,98 @@ model Vehicle {
   receipts      Receipt[]
 }
 
+// Main transaction/receipt model - enhanced for full personal finance
 model Receipt {
-  id             String         @id @default(cuid())
-  legacyId       String?        @unique
-  storeName      String
-  storeLocation  String?
-  category       String?
+  id              String          @id @default(cuid())
+  legacyId        String?         @unique
+  isMockData      Boolean         @default(false)  // Flag for test data
+  
+  // Document Classification
+  documentType    DocumentType    @default(RECEIPT)
+  
+  // Basic Info
+  storeName       String          // Merchant / Employer / Bank name
+  storeLocation   String?
+  description     String?         // Transaction description
+  
+  // Categorization
+  category        String?         // Main category (Housing, Food, Income, etc.)
+  subcategory     String?         // Sub category (Mortgage, Groceries, Salary, etc.)
+  tags            String[]        // Custom tags
+  
+  // Transaction Details
   transactionDate DateTime
-  totalAmount    Decimal        @db.Decimal(18, 4)
-  taxAmount      Decimal        @db.Decimal(18, 4) @default(0)
-  currency       String         @default("USD")
-  status         String         @default("completed")
-  source         ReceiptSource
-  fileUrl        String?
-  sheetRowId     String?
-  distanceKm     Decimal?       @db.Decimal(18, 4)
-  meta           Json?
-  rawPayload     Json?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  vehicle        Vehicle?       @relation(fields: [vehicleId], references: [id])
-  vehicleId      String?
-  items          ReceiptItem[]
+  receivedAt      DateTime?       // When document was received/uploaded
+  totalAmount     Decimal         @db.Decimal(18, 4)
+  taxAmount       Decimal         @db.Decimal(18, 4) @default(0)
+  currency        String          @default("USD")
+  type            TransactionType @default(EXPENSE)
+  
+  // Payment Information
+  paymentMethod   PaymentMethod?
+  paymentAccount  String?         // e.g., "Chase Sapphire", "BofA Checking"
+  cardLast4       String?         // Last 4 digits of card
+  
+  // Financial Analysis Fields
+  isRecurring     Boolean         @default(false)
+  recurringFrequency String?      // monthly, weekly, biweekly, annual
+  isTaxDeductible Boolean         @default(false)
+  isBusinessExpense Boolean       @default(false)
+  budgetCategory  String?         // For budget tracking
+  notes           String?
+  
+  // Paycheck specific fields (stored in meta for flexibility)
+  // - grossPay, netPay, deductions, taxes, benefits, etc.
+  
+  // Processing Status
+  status          String          @default("completed")
+  source          ReceiptSource
+  fileUrl         String?
+  sheetRowId      String?
+  
+  // Vehicle tracking (for gas, maintenance)
+  distanceKm      Decimal?        @db.Decimal(18, 4)
+  vehicle         Vehicle?        @relation(fields: [vehicleId], references: [id])
+  vehicleId       String?
+  
+  // Raw data storage
+  meta            Json?           // Flexible metadata storage
+  rawPayload      Json?           // Original AI extraction result
+  
+  // Timestamps
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relations
+  items           ReceiptItem[]
 }
 
 model ReceiptItem {
-  id         String   @id @default(cuid())
-  receipt    Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
-  receiptId  String
-  name       String
-  category   String?
-  quantity   Decimal? @db.Decimal(18, 4)
-  unitPrice  Decimal? @db.Decimal(18, 4)
-  totalPrice Decimal? @db.Decimal(18, 4)
+  id          String   @id @default(cuid())
+  receipt     Receipt  @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  receiptId   String
+  name        String
+  category    String?
+  quantity    Decimal? @db.Decimal(18, 4)
+  unitPrice   Decimal? @db.Decimal(18, 4)
+  totalPrice  Decimal? @db.Decimal(18, 4)
   isEstimated Boolean  @default(false)
-  tags       String[]
-  meta       Json?
-  createdAt  DateTime @default(now())
+  tags        String[]
+  meta        Json?
+  createdAt   DateTime @default(now())
 }
 
 model MetricMonthly {
-  id          String   @id @default(cuid())
-  month       String   @db.VarChar(7)
-  metricKey   String
+  id           String   @id @default(cuid())
+  month        String   @db.VarChar(7)
+  metricKey    String
   valueNumeric Decimal? @db.Decimal(24, 8)
-  valueText   String?
-  valueJson   Json?
-  unit        String?
-  meta        Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  valueText    String?
+  valueJson    Json?
+  unit         String?
+  meta         Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([month, metricKey])
 }
@@ -112,31 +194,90 @@ model IndicatorDefinition {
 }
 
 model AnalysisReport {
-  id           String   @id @default(cuid())
-  month        String   @db.VarChar(7)
-  model        String
-  role         String?
-  summaryText  String
-  recommendations Json
-  vehicleInsights Json?
+  id                String   @id @default(cuid())
+  month             String   @db.VarChar(7)
+  model             String
+  role              String?
+  summaryText       String
+  recommendations   Json
+  vehicleInsights   Json?
   spendingBreakdown Json?
-  rawResponse  Json?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  rawResponse       Json?
+  tokensUsed        Int?     // Track token usage
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@unique([month, model])
 }
 
 model EmailJob {
-  id          String        @id @default(cuid())
-  month       String        @db.VarChar(7)
-  status      EmailJobStatus @default(pending)
-  error       String?
-  sentAt      DateTime?
-  payload     Json?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id        String         @id @default(cuid())
+  month     String         @db.VarChar(7)
+  status    EmailJobStatus @default(pending)
+  error     String?
+  sentAt    DateTime?
+  payload   Json?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
   @@index([month, status])
 }
 
+// AI Processing Log - Track all AI calls for debugging and cost analysis
+model AIProcessingLog {
+  id            String   @id @default(cuid())
+  operation     String   // e.g., "receipt_ocr", "analysis_generate", "categorize"
+  model         String   // e.g., "claude-3.5-sonnet"
+  inputTokens   Int      @default(0)
+  outputTokens  Int      @default(0)
+  totalTokens   Int      @default(0)
+  costUsd       Decimal? @db.Decimal(10, 6)
+  durationMs    Int?
+  status        String   @default("success") // success, error
+  errorMessage  String?
+  receiptId     String?  // Optional link to receipt
+  meta          Json?
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([operation])
+}
+
+// System Configuration
+model SystemConfig {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  meta      Json?
+  updatedAt DateTime @updatedAt
+}
+
+// Payment Account - Track credit cards and bank accounts
+model PaymentAccount {
+  id            String   @id @default(cuid())
+  name          String   // e.g., "Chase Sapphire Preferred"
+  type          String   // credit_card, debit_card, bank_account
+  institution   String?  // e.g., "Chase", "Bank of America"
+  last4         String?
+  creditLimit   Decimal? @db.Decimal(18, 2)
+  rewardsType   String?  // e.g., "cashback", "points", "miles"
+  rewardsRate   String?  // e.g., "3x dining, 2x travel"
+  isActive      Boolean  @default(true)
+  meta          Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Budget - Monthly budget by category
+model Budget {
+  id        String   @id @default(cuid())
+  month     String   @db.VarChar(7)
+  category  String
+  budgeted  Decimal  @db.Decimal(18, 2)
+  spent     Decimal  @db.Decimal(18, 2) @default(0)
+  meta      Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([month, category])
+}
