@@ -147,3 +147,13 @@ export const generateCustomAnalysis = async (startDate, endDate) => {
   const response = await apiClient.post('/api/v2/analysis/generate-custom', { startDate, endDate });
   return response.data;
 };
+
+// Mock Data Management APIs
+export const fetchMockDataStatus = () =>
+  apiClient.get('/api/v2/mock-data/status').then((res) => res.data);
+
+export const seedMockData = () =>
+  apiClient.post('/api/v2/mock-data/seed').then((res) => res.data);
+
+export const deleteMockData = () =>
+  apiClient.delete('/api/v2/mock-data').then((res) => res.data);

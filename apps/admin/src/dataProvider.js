@@ -32,6 +32,23 @@ const receiptOneAdapter = async (id) => {
 
 const unsupported = (method) => () => Promise.reject(`${method} is not implemented in this data provider`);
 
+// Create receipt/transaction
+const createReceipt = async (data) => {
+  const { json } = await httpClient(`${API_BASE_URL}/api/v2/receipts`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return { data: { id: json.id, ...json } };
+};
+
+// Delete receipt
+const deleteReceipt = async (id) => {
+  await httpClient(`${API_BASE_URL}/api/v2/receipts/${id}`, {
+    method: 'DELETE',
+  });
+  return { data: { id } };
+};
+
 export const dataProvider = {
   getList: (resource, params) => {
     if (resource === 'receipts') {
@@ -56,8 +73,18 @@ export const dataProvider = {
   getManyReference: unsupported('getManyReference'),
   update: unsupported('update'),
   updateMany: unsupported('updateMany'),
-  create: unsupported('create'),
-  delete: unsupported('delete'),
+  create: (resource, params) => {
+    if (resource === 'receipts') {
+      return createReceipt(params.data);
+    }
+    return unsupported('create')();
+  },
+  delete: (resource, params) => {
+    if (resource === 'receipts') {
+      return deleteReceipt(params.id);
+    }
+    return unsupported('delete')();
+  },
   deleteMany: unsupported('deleteMany')
 };
 

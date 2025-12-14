@@ -3,6 +3,7 @@ import {
   Typography, Grid, Button, Stack, TextField, Chip, Box,
   IconButton, Paper, Divider, Avatar, Tab, Tabs, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, LinearProgress, alpha, Alert, Card, CardContent,
+  CircularProgress,
 } from '@mui/material';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip,
@@ -10,12 +11,13 @@ import {
 } from 'recharts';
 import {
   fetchMetrics, fetchAnalysis, recomputeMetrics, generateAnalysis,
-  sendReportEmail, fetchReceiptStats
+  sendReportEmail, fetchReceiptStats, fetchMockDataStatus, seedMockData, deleteMockData
 } from '../../lib/api';
 import {
   TrendingUp, TrendingDown, Refresh, AutoAwesome, Email,
   Store, PieChart as PieIcon, Receipt, CreditCard, ShowChart,
   AccountBalance, Savings, Settings, Payment, CalendarToday,
+  Add, Delete, Science,
 } from '@mui/icons-material';
 import { SystemStatusPanel } from './SystemStatusPanel';
 
@@ -145,6 +147,35 @@ export const OverviewDashboard = () => {
   const [actionState, setActionState] = useState({ recompute: false, analysis: false, email: false });
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState(0);
+  
+  // Mock Data Management
+  const [mockStatus, setMockStatus] = useState(null);
+  const [mockLoading, setMockLoading] = useState(false);
+
+  const loadMockStatus = useCallback(async () => {
+    try {
+      const status = await fetchMockDataStatus();
+      setMockStatus(status);
+    } catch (err) {
+      console.error('Failed to load mock status:', err);
+    }
+  }, []);
+
+  const handleMockAction = async (action) => {
+    setMockLoading(true);
+    try {
+      if (action === 'seed') {
+        await seedMockData();
+      } else {
+        await deleteMockData();
+      }
+      await Promise.all([loadMockStatus(), loadData()]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setMockLoading(false);
+    }
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -163,7 +194,7 @@ export const OverviewDashboard = () => {
     }
   }, [dateRange]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { loadData(); loadMockStatus(); }, [loadData, loadMockStatus]);
 
   const handlePresetChange = (preset) => {
     setDatePreset(preset);
@@ -227,6 +258,58 @@ export const OverviewDashboard = () => {
           </IconButton>
         </Stack>
       </Stack>
+
+      {/* Mock Data Management Bar */}
+      {mockStatus && (
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 1.5, 
+            mb: 2, 
+            borderRadius: 2, 
+            border: '1px solid',
+            borderColor: mockStatus.hasMockData ? 'warning.main' : 'divider',
+            bgcolor: mockStatus.hasMockData ? alpha('#f59e0b', 0.05) : 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 1
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Science sx={{ color: mockStatus.hasMockData ? 'warning.main' : 'text.secondary', fontSize: 20 }} />
+            <Typography variant="body2" color="text.secondary">
+              <strong>Test Data:</strong> {mockStatus.mockDataCount} mock / {mockStatus.realDataCount} real receipts
+            </Typography>
+          </Stack>
+          <Stack direction="row" spacing={1} alignItems="center">
+            {mockLoading && <CircularProgress size={16} />}
+            <Button
+              size="small"
+              variant="outlined"
+              color="primary"
+              startIcon={<Add fontSize="small" />}
+              onClick={() => handleMockAction('seed')}
+              disabled={mockLoading}
+              sx={{ fontSize: '0.75rem', py: 0.5 }}
+            >
+              Add Mock
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              color="error"
+              startIcon={<Delete fontSize="small" />}
+              onClick={() => handleMockAction('delete')}
+              disabled={mockLoading || !mockStatus.hasMockData}
+              sx={{ fontSize: '0.75rem', py: 0.5 }}
+            >
+              Delete Mock
+            </Button>
+          </Stack>
+        </Paper>
+      )}
 
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
       {loading && <LinearProgress sx={{ mb: 2, borderRadius: 1 }} />}
@@ -410,51 +493,94 @@ export const OverviewDashboard = () => {
           {/* Merchants Tab */}
           {activeTab === 2 && (
             <Grid container spacing={3}>
-              <Grid item xs={12} lg={8}>
+              <Grid item xs={12} lg={7}>
                 <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                   <Typography variant="h6" fontWeight={600} gutterBottom>Top Merchants</Typography>
-                  <Box sx={{ height: 500 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={(stats?.storeBreakdown || []).slice(0, 12)} layout="vertical" margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
-                        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} tickFormatter={(v) => `$${v}`} />
-                        <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 13, fill: '#374151', fontWeight: 500 }} width={140} />
-                        <RechartsTooltip content={<CustomTooltip />} />
-                        <Bar dataKey="amount" fill="#f59e0b" radius={[0, 6, 6, 0]} barSize={24} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </Box>
+                  <TableContainer sx={{ maxHeight: 500 }}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Merchant</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, bgcolor: 'grey.50' }}>Amount</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, bgcolor: 'grey.50', width: 200 }}>Share</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(stats?.storeBreakdown || []).slice(0, 10).map((store, idx) => {
+                          const total = (stats?.storeBreakdown || []).reduce((sum, s) => sum + s.amount, 0);
+                          const percent = total > 0 ? (store.amount / total * 100) : 0;
+                          return (
+                            <TableRow key={store.name} hover>
+                              <TableCell>
+                                <Stack direction="row" alignItems="center" spacing={1.5}>
+                                  <Avatar sx={{ width: 32, height: 32, bgcolor: COLORS[idx % COLORS.length], fontSize: '0.8rem' }}>
+                                    {store.name?.charAt(0).toUpperCase()}
+                                  </Avatar>
+                                  <Typography variant="body2" fontWeight={500}>{store.name}</Typography>
+                                </Stack>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography variant="body2" fontWeight={600}>{formatCurrency(store.amount)}</Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={percent}
+                                    sx={{ 
+                                      flex: 1, 
+                                      height: 8, 
+                                      borderRadius: 4, 
+                                      bgcolor: alpha(COLORS[idx % COLORS.length], 0.15),
+                                      '& .MuiLinearProgress-bar': { bgcolor: COLORS[idx % COLORS.length], borderRadius: 4 }
+                                    }}
+                                  />
+                                  <Typography variant="caption" fontWeight={600} color="text.secondary" sx={{ minWidth: 40 }}>
+                                    {percent.toFixed(1)}%
+                                  </Typography>
+                                </Stack>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
                 </Paper>
               </Grid>
-              <Grid item xs={12} lg={4}>
+              <Grid item xs={12} lg={5}>
                 <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: '1px solid', borderColor: 'divider', height: '100%' }}>
                   <Typography variant="h6" fontWeight={600} gutterBottom>By Source</Typography>
-                  <Box sx={{ height: 500 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={stats?.sourceBreakdown || []}
-                          dataKey="amount"
-                          nameKey="name"
-                          cx="50%"
-                          cy="45%"
-                          innerRadius={70}
-                          outerRadius={120}
-                          paddingAngle={3}
-                        >
-                          {(stats?.sourceBreakdown || []).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip content={<CustomTooltip />} />
-                        <Legend 
-                          layout="horizontal"
-                          verticalAlign="bottom"
-                          formatter={(value) => <span style={{ color: '#374151', fontSize: 13, fontWeight: 500 }}>{value}</span>}
-                          wrapperStyle={{ paddingTop: 20 }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                  <Box sx={{ height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {(stats?.sourceBreakdown || []).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={stats?.sourceBreakdown || []}
+                            dataKey="amount"
+                            nameKey="name"
+                            cx="50%"
+                            cy="40%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={3}
+                          >
+                            {(stats?.sourceBreakdown || []).map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip content={<CustomTooltip />} />
+                          <Legend 
+                            layout="horizontal"
+                            verticalAlign="bottom"
+                            formatter={(value) => <span style={{ color: '#374151', fontSize: 12, fontWeight: 500 }}>{value}</span>}
+                            wrapperStyle={{ paddingTop: 10 }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <Typography color="text.secondary">No source data available</Typography>
+                    )}
                   </Box>
                 </Paper>
               </Grid>
@@ -467,32 +593,36 @@ export const OverviewDashboard = () => {
               <Grid item xs={12} lg={6}>
                 <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
                   <Typography variant="h6" fontWeight={600} gutterBottom>Payment Methods</Typography>
-                  <Box sx={{ height: 450 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={stats?.sourceBreakdown || []}
-                          dataKey="amount"
-                          nameKey="name"
-                          cx="50%"
-                          cy="45%"
-                          innerRadius={80}
-                          outerRadius={140}
-                          paddingAngle={2}
-                        >
-                          {(stats?.sourceBreakdown || []).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                          ))}
-                        </Pie>
-                        <RechartsTooltip content={<CustomTooltip />} />
-                        <Legend 
-                          layout="horizontal"
-                          verticalAlign="bottom"
-                          formatter={(value) => <span style={{ color: '#374151', fontSize: 13, fontWeight: 500 }}>{value}</span>}
-                          wrapperStyle={{ paddingTop: 20 }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
+                  <Box sx={{ height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {(stats?.sourceBreakdown || []).length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={stats?.sourceBreakdown || []}
+                            dataKey="amount"
+                            nameKey="name"
+                            cx="50%"
+                            cy="40%"
+                            innerRadius={60}
+                            outerRadius={100}
+                            paddingAngle={2}
+                          >
+                            {(stats?.sourceBreakdown || []).map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip content={<CustomTooltip />} />
+                          <Legend 
+                            layout="horizontal"
+                            verticalAlign="bottom"
+                            formatter={(value) => <span style={{ color: '#374151', fontSize: 12, fontWeight: 500 }}>{value}</span>}
+                            wrapperStyle={{ paddingTop: 10 }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <Typography color="text.secondary">No payment data available</Typography>
+                    )}
                   </Box>
                 </Paper>
               </Grid>

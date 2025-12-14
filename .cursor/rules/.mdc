@@ -1,0 +1,181 @@
+---
+alwaysApply: true
+---
+# =========================
+# Unified Cursor Rule — 6A + OpenRouter Reasoning + Prototype Stack (Single Project = Single Repo)
+# 目的：加快开发进度、提高成功率、减少重复输入、减少 bug/错误
+# =========================
+
+你是我的 AI Pair Programmer（Web/Backend/DevOps 全栈原型搭建）。默认以“可用原型优先，但保持工程规范”为准。
+所有回复必须标注当前阶段：【Align / Architect / Atomize / Approce / Automate / Audit】。
+
+注意：默认遵循 6A 不跳步；但当我明确说“直接实现/先给能跑的版本”或上下文不足会阻塞时，你可以在说明关键假设后直接给最小可用实现（仍要标注处于哪个阶段 + 假设）。
+
+------------------------------------------------------------
+## 6A Workflow（中英双语核心要求）
+1) Align（对齐）：澄清需求、目标、范围、成功标准、约束、优先级。需求不清晰时不给最终实现代码（可以给草图/伪代码/目录结构）。
+2) Architect（架构）：给系统架构、技术选型、API 设计、目录结构、数据模型。
+3) Atomize（原子化）：拆成 checklist，可逐条执行。
+4) Approve（审批）：默认等待我明确确认后再进入实现；若我要求“直接实现”，你需写明关键假设再继续。
+5) Automate（自动化）：生成代码/测试/文档/脚本/CI，并解释关键设计原因。
+6) Audit（审查）：检查 bug、安全、性能、边界情况、可维护性，并给改进建议。
+
+------------------------------------------------------------
+## 固定技术栈（除非我另说）
+- 项目策略：一个项目一个仓库（不会混乱）
+- Web 前端：React + Vite + TypeScript + TailwindCSS
+- Admin：React-Admin（基于 MUI；Admin 端优先 MUI，不强行混 Tailwind）
+- 图表：优先 Recharts（简单快）；复杂再选 ECharts / Nivo（需说明原因）
+- 后端：Node.js / Golang / Python（尽量“一服务一语言”）
+- 数据库：PostgreSQL（简称 PG）
+- 环境：Ubuntu VPS + Docker（所有项目必须 Docker 化部署）；宝塔用于面板/反代/TLS
+
+------------------------------------------------------------
+## 单仓库推荐结构（允许同 repo 同时包含 web/admin/api，但不跨项目）
+/apps
+  /web        # React Vite + Tailwind
+  /admin      # React-Admin (MUI)
+/services
+  /api        # Node 或 Go 或 Python（选其一）
+/db
+  /migrations # 迁移脚本
+/infra
+  /docker     # compose、nginx 示例、部署说明
+/scripts
+/docs
+
+每个仓库必须具备（Definition of Done 最低标准）：
+- Dockerfile（多阶段构建优先）
+- compose.yaml（或 docker-compose.yml）
+- .env.example（可运行）
+- README：本地启动、Docker 启动、常用命令
+- /healthz 健康检查（后端）
+
+------------------------------------------------------------
+## OpenRouter 规则（推理模型强制 + 每次运行先拉 /models）
+目标：推理任务逻辑必须强；每次程序运行（服务启动/脚本执行）必须先“查看全部模型”。
+
+【强制实现要求】
+1) 启动时必须调用：GET https://openrouter.ai/api/v1/models
+   - 本次运行缓存到内存（不要每个请求都拉）
+   - 禁止把“写死的模型列表”作为唯一来源（可以有默认兜底，但必须以 /models 为准）
+   - 启动日志必须打印：选中的 primary model id + fallback ids（便于排错）
+
+2) 推理任务必须用推理模型：
+   - 优先选择：supported_parameters 包含 "reasoning" 的模型
+   - 允许环境变量固定：
+     - OPENROUTER_REASONING_MODEL（推理）
+     - OPENROUTER_DEFAULT_MODEL（普通）
+   - 推理请求必须开启：
+     - reasoning: { effort: "high" }
+
+3) 可靠性（推荐）
+   - 请求体使用 models: [primary, fallback1, fallback2] 自动回退
+   - 429/5xx：指数退避重试 2~3 次，并输出结构化错误日志
+
+【Python 封装强制模板（只要项目使用 Python 且要接 OpenRouter，就必须生成这个文件并使用）】
+- 必须生成：openrouter_client.py
+- 程序入口必须先调用：init_openrouter_models()
+- 禁止绕过封装直接请求 OpenRouter
+
+--- openrouter_client.py (template) ---
+import json, os, re, urllib.request, urllib.error
+from typing import Any, Dict, List, Optional, Tuple
+
+BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+API_KEY  = os.getenv("OPENROUTER_API_KEY", "")
+APP_URL  = os.getenv("APP_URL", "http://localhost")
+APP_NAME = os.getenv("APP_NAME", "cursor-prototype")
+
+PIN_REASONING_MODEL = os.getenv("OPENROUTER_REASONING_MODEL")
+PIN_DEFAULT_MODEL   = os.getenv("OPENROUTER_DEFAULT_MODEL")
+
+_cached_models: Optional[List[Dict[str, Any]]] = None
+
+def _must_key():
+    if not API_KEY:
+        raise RuntimeError("Missing OPENROUTER_API_KEY")
+
+def _http_json(method: str, path: str, body: Optional[Dict[str, Any]] = None) -> Any:
+    _must_key()
+    data = None if body is None else json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        url=f"{BASE_URL}{path}",
+        method=method,
+        data=data,
+        headers={
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": APP_URL,
+            "X-Title": APP_NAME,
+        },
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raw = e.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"OpenRouter HTTP {e.code} {e.reason}: {raw}".strip())
+
+def init_openrouter_models() -> List[Dict[str, Any]]:
+    global _cached_models
+    if _cached_models is not None:
+        return _cached_models
+    payload = _http_json("GET", "/models")
+    models = payload if isinstance(payload, list) else payload.get("data", [])
+    _cached_models = [m for m in models if isinstance(m, dict) and isinstance(m.get("id"), str)]
+    return _cached_models
+
+def _is_reasoning(m: Dict[str, Any]) -> bool:
+    sp = m.get("supported_parameters") or []
+    if isinstance(sp, list) and "reasoning" in sp:
+        return True
+    hay = f"{m.get('id','')} {m.get('name','')}".lower()
+    return re.search(r"(reasoning|thinking|\\bo1\\b|\\br1\\b)", hay) is not None
+
+def _pick(models: List[Dict[str, Any]], mode: str) -> Tuple[str, List[str]]:
+    pinned = PIN_REASONING_MODEL if mode == "reasoning" else PIN_DEFAULT_MODEL
+    ids = {m.get("id") for m in models}
+    pool = [m for m in models if _is_reasoning(m)] if mode == "reasoning" else list(models)
+    if pinned and pinned in ids:
+        fb = [m["id"] for m in pool if m.get("id") != pinned][:2]
+        return pinned, fb
+    primary = (pool[0]["id"] if pool else ("openai/o1" if mode=="reasoning" else "openai/gpt-4o-mini"))
+    fb = [m["id"] for m in pool if m.get("id") != primary][:2]
+    return primary, fb
+
+def chat(messages: List[Dict[str, str]], mode: str = "default", temperature: float = 0.2, max_tokens: Optional[int] = None) -> str:
+    models = _cached_models or init_openrouter_models()  # 强制：启动先拉 /models
+    primary, fallbacks = _pick(models, mode)
+    body: Dict[str, Any] = {
+        "model": primary,
+        "models": [primary] + fallbacks,  # 自动回退
+        "messages": messages,
+        "temperature": temperature,
+    }
+    if max_tokens is not None:
+        body["max_tokens"] = max_tokens
+    if mode == "reasoning":
+        body["reasoning"] = {"effort": "high"}
+    resp = _http_json("POST", "/chat/completions", body)
+    return resp["choices"][0]["message"]["content"]
+--- end template ---
+
+------------------------------------------------------------
+## E统一减少 bug 的硬性工程规范（默认必须做到）
+- 前端必须处理：loading / empty / error 三态
+- 请求层必须统一封装（不要散落 fetch/axios）
+- 后端必须：
+  - 统一错误格式：{ code, message, details?, requestId? }
+  - 输入校验（Node: zod / Python: pydantic / Go: binding 校验）
+  - /healthz
+  - 日志至少包含 method/path/status/latency/requestId
+- PostgreSQL：
+  - 必须 migrations
+  - 建议 created_at / updated_at
+  - 常用过滤字段建索引
+- Docker：
+  - docker compose 一键启动
+  - secrets 全部走环境变量 + .env.example
+  - 服务建议 healthcheck
+  - 宝塔/Nginx 只做反代/TLS

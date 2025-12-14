@@ -18,6 +18,7 @@ import { saveReceiptToDatabase, listReceipts as listReceiptsV2, getReceiptById }
 import { computeMonthlyMetrics, getMetrics } from './services/metricsService.js';
 import { generateMonthlyAnalysis, getAnalysisReport } from './services/analysisService.js';
 import { sendMonthlyReportEmail } from './services/emailService.js';
+import { initOpenRouterModels, visionChat, getModelConfig } from './lib/openrouter-client.js';
 
 // Load environment variables
 dotenv.config();
@@ -203,60 +204,88 @@ app.get('/api/progress', (req, res) => {
   });
 });
 
-// --- OpenRouter Helper ---
-async function analyzeReceiptWithOpenRouter(fileBuffer, mimeType) {
-  if (!process.env.OPENROUTER_API_KEY) throw new Error("OpenRouter Key missing");
+// --- Financial Category System (Professional Classification) ---
+const EXPENSE_CATEGORIES = `
+EXPENSE CATEGORIES (choose the most appropriate):
+- Dining: Restaurant, Fast Food, Coffee Shop, Bar/Pub, Food Delivery
+- Groceries: Supermarket, Convenience Store, Farmers Market
+- Transportation: Fuel/Gas, Parking, Toll, Rideshare (Uber/Lyft), Public Transit
+- Vehicle: Car Repair, Service, Parts, Car Wash, Oil Change, Tires
+- Shopping: Electronics, Clothing, Home & Garden, Office Supplies, Online Shopping
+- Utilities: Electric, Gas, Water, Internet, Phone/Mobile
+- Entertainment: Movies, Games, Sports, Events, Streaming Services
+- Healthcare: Pharmacy, Doctor Visit, Dentist, Hospital, Medical Supplies
+- Housing: Rent, Mortgage, Home Maintenance, Furniture, Appliances
+- Subscriptions: Software, Memberships, Streaming, SaaS
+- Travel: Lodging/Hotel, Flights, Vacation Expenses, Rental Car
+- Personal Care: Salon, Spa, Gym, Beauty, Haircut
+- Education: Tuition, Books, Courses, Training
+- Financial: Bank Fees, ATM, Interest Charges
+- Insurance: Auto Insurance, Health Insurance, Home Insurance
+- Gifts & Donations: Gifts, Charity, Donations
+- Pets: Pet Food, Vet, Pet Supplies
+- Kids & Family: Childcare, School Supplies, Toys
+- Misc: Anything that doesn't fit above
+`;
 
+// --- OpenRouter Helper (Using Unified Client) ---
+async function analyzeReceiptWithOpenRouter(fileBuffer, mimeType) {
   const base64Image = fileBuffer.toString('base64');
 
-  try {
-    console.log("🧠 Sending image to OpenRouter...");
-    const response = await axios.post("https://openrouter.ai/api/v1/chat/completions", {
-      model: "anthropic/claude-3.5-sonnet",
-      messages: [
+  console.log("🧠 Sending image to OpenRouter (vision)...");
+  
+  const messages = [
+    {
+      role: "user",
+      content: [
         {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `You are a receipt scanner API. Extract data from this image.
-              Return ONLY valid JSON. No markdown formatting, no notes.
-              Required JSON Structure:
-              {
-                "store_name": "string",
-                "store_location": "string",
-                "date": "YYYY-MM-DD",
-                "total_amount": number,
-                "tax_amount": number,
-                "items": [
-                  { "name": "string", "price": number }
-                ]
-              }
-              Rules:
-              1. If date is missing, use "${new Date().toISOString().split('T')[0]}".
-              2. If tax is not shown, use 0.
-              3. If location (city/branch) is not shown, use "Unknown".
-              4. total_amount MUST be a number (e.g. 12.50), do NOT include '$'.
-              5. If the image is blurry or not a receipt (e.g. logos, signatures, promotional banners), return {"error": "not_a_receipt"}.
-              6. These images often come from email attachments; ignore loyalty cards or marketing graphics unless they clearly contain itemized totals.`
-            },
-            {
-              type: "image_url",
-              image_url: { url: `data:${mimeType};base64,${base64Image}` }
-            }
-          ]
+          type: "text",
+          text: `You are a receipt scanner API for a personal finance app. Extract data from this receipt image.
+Return ONLY valid JSON. No markdown formatting, no notes.
+
+Required JSON Structure:
+{
+  "store_name": "string",
+  "store_location": "string (city, state/province)",
+  "date": "YYYY-MM-DD",
+  "total_amount": number,
+  "tax_amount": number,
+  "category": "string (from list below)",
+  "subcategory": "string (specific type)",
+  "payment_method": "string (Cash/Credit/Debit/Unknown)",
+  "items": [
+    { "name": "string", "price": number, "category": "string" }
+  ]
+}
+
+${EXPENSE_CATEGORIES}
+
+RULES:
+1. category MUST be one of the main categories listed above (e.g., "Dining", "Groceries", "Transportation").
+2. subcategory is the specific type (e.g., "Fast Food", "Supermarket", "Fuel/Gas").
+3. For gas stations: category="Transportation", subcategory="Fuel/Gas".
+4. For restaurants/fast food: category="Dining", subcategory="Restaurant" or "Fast Food".
+5. For auto repair shops: category="Vehicle", subcategory="Car Repair" or "Service".
+6. If date is missing, use "${new Date().toISOString().split('T')[0]}".
+7. If tax is not shown, use 0.
+8. total_amount MUST be a number (e.g. 12.50), do NOT include '$'.
+9. If the image is blurry or not a receipt, return {"error": "not_a_receipt"}.`
+        },
+        {
+          type: "image_url",
+          image_url: { url: `data:${mimeType};base64,${base64Image}` }
         }
       ]
-    }, {
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://receipt-manifestation.app",
-      }
-    });
+    }
+  ];
 
-    let content = response.data.choices[0].message.content;
-    console.log("🧠 Raw AI Response:", content); // Debug Log
+  try {
+    const result = await visionChat(messages);
+    console.log(`🧠 Vision model used: ${result.model}`);
+    console.log(`📊 Tokens: ${result.usage.totalTokens}`);
+    
+    let content = result.content;
+    console.log("🧠 Raw AI Response:", content);
 
     // Sanitize: Remove markdown blocks if present
     content = content.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -271,38 +300,51 @@ async function analyzeReceiptWithOpenRouter(fileBuffer, mimeType) {
     return data;
 
   } catch (error) {
-    console.error("OpenRouter Error:", error.response?.data || error.message);
+    console.error("OpenRouter Vision Error:", error.message);
     throw error;
   }
 }
 
 async function analyzeEmailReceiptWithOpenRouter({ htmlContent, attachments }) {
-  if (!process.env.OPENROUTER_API_KEY) throw new Error("OpenRouter Key missing");
-
   const emailHtml = htmlContent || 'No email body provided.';
   const limitedAttachments = (attachments || []).slice(0, 3);
+
+  console.log("🧠 Sending email content to OpenRouter (vision)...");
 
   const contentBlocks = [
     {
       type: "text",
-      text: `You are a receipt scanner AI. Your task is to read the following EMAIL HTML + optional attachments and return ONLY a JSON object that matches this schema:
+      text: `You are a receipt scanner AI for a personal finance app. Read the following EMAIL HTML + optional attachments and return ONLY a JSON object.
+
+Required JSON Structure:
 {
   "store_name": "string",
-  "store_location": "string",
+  "store_location": "string (city, state/province)",
   "date": "YYYY-MM-DD",
   "total_amount": number,
   "tax_amount": number,
+  "category": "string (from list below)",
+  "subcategory": "string (specific type)",
+  "payment_method": "string (Cash/Credit/Debit/Unknown)",
   "items": [
-    { "name": "string", "price": number }
+    { "name": "string", "price": number, "category": "string" }
   ]
 }
-Rules:
-1. store_location should include address/city/state if available.
-2. total_amount is the final paid amount.
-3. tax_amount is the tax portion (0 if unknown).
-4. items can be a short list (max 5) covering the most relevant line items.
-5. If you cannot find a receipt, respond exactly {"error":"not_a_receipt"}.
-6. Do NOT include any other fields; no merchant/phone/time unless mapped into the schema above.
+
+${EXPENSE_CATEGORIES}
+
+RULES:
+1. category MUST be one of the main categories listed above.
+2. subcategory is the specific type within that category.
+3. For gas stations: category="Transportation", subcategory="Fuel/Gas".
+4. For restaurants: category="Dining", subcategory="Restaurant" or "Fast Food".
+5. For subscriptions/software: category="Subscriptions".
+6. For utility bills: category="Utilities", subcategory="Electric/Gas/Water/Internet/Phone".
+7. store_location should include address/city/state if available.
+8. total_amount is the final paid amount (number only, no currency symbol).
+9. tax_amount is the tax portion (0 if unknown).
+10. items can be a short list (max 5) covering the most relevant line items.
+11. If you cannot find a receipt, respond exactly {"error":"not_a_receipt"}.
 
 --- EMAIL HTML START ---
 ${emailHtml}
@@ -310,7 +352,7 @@ ${emailHtml}
     }
   ];
 
-  limitedAttachments.forEach((att, idx) => {
+  limitedAttachments.forEach((att) => {
     contentBlocks.push({
       type: "image_url",
       image_url: {
@@ -321,23 +363,13 @@ ${emailHtml}
   });
 
   try {
-    const response = await axios.post("https://openrouter.ai/api/v1/chat/completions", {
-      model: "anthropic/claude-3.5-sonnet",
-      messages: [
-        {
-          role: "user",
-          content: contentBlocks
-        }
-      ]
-    }, {
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://receipt-manifestation.app",
-      }
-    });
+    const messages = [{ role: "user", content: contentBlocks }];
+    const result = await visionChat(messages);
+    
+    console.log(`🧠 Vision model used: ${result.model}`);
+    console.log(`📊 Tokens: ${result.usage.totalTokens}`);
 
-    let content = response.data.choices[0].message.content;
+    let content = result.content;
     console.log("🧠 Raw AI Response (email):", content);
     content = content.replace(/```json/gi, '').replace(/```/g, '').trim();
     const data = JSON.parse(content);
@@ -367,7 +399,7 @@ ${emailHtml}
 
     return data;
   } catch (error) {
-    console.error("OpenRouter Email Error:", error.response?.data || error.message);
+    console.error("OpenRouter Email Vision Error:", error.message);
     throw error;
   }
 }
@@ -829,6 +861,8 @@ async function checkEmails() {
           storeName: data.store_name || 'Unknown Store',
           storeLocation: data.store_location,
           category: data.category,
+          subcategory: data.subcategory,
+          paymentMethod: data.payment_method,
           transactionDate: data.date,
           totalAmount: Number(data.total_amount ?? 0),
           taxAmount: Number(data.tax_amount ?? 0),
@@ -838,6 +872,7 @@ async function checkEmails() {
           meta: { channel: 'email' },
           items: (data.items || []).map((item) => ({
             name: item.name,
+            category: item.category,
             totalPrice: Number(item.price ?? item.amount ?? 0),
             quantity: item.quantity
           }))
@@ -958,6 +993,64 @@ app.get('/api/v2/receipts/:id', async (req, res) => {
   }
 });
 
+// Create Transaction (Manual Entry) - for income, expenses, etc.
+app.post('/api/v2/receipts', async (req, res) => {
+  try {
+    const data = req.body;
+    console.log('📝 Creating manual transaction:', data.storeName, data.type);
+    
+    // Map frontend field names to database field names
+    const payload = {
+      storeName: data.storeName,
+      storeLocation: data.storeLocation || null,
+      transactionDate: data.transactionDate ? new Date(data.transactionDate) : new Date(),
+      totalAmount: parseFloat(data.totalAmount) || 0,
+      taxAmount: parseFloat(data.taxAmount) || 0,
+      currency: data.currency || 'USD',
+      source: 'MANUAL',
+      type: data.type || 'EXPENSE',
+      documentType: data.documentType || 'RECEIPT',
+      category: data.category || null,
+      subcategory: data.subcategory || null,
+      paymentMethod: data.paymentMethod || null,
+      paymentAccount: data.paymentAccount || null,
+      cardLast4: data.cardLast4 || null,
+      isRecurring: data.isRecurring || false,
+      isTaxDeductible: data.isTaxDeductible || false,
+      isBusinessExpense: data.isBusinessExpense || false,
+      notes: data.notes || null,
+      items: data.items || [],
+    };
+
+    const receipt = await saveReceiptToDatabase(payload);
+    console.log('✅ Manual transaction created:', receipt.id);
+    
+    res.status(201).json(serializeReceipt(receipt));
+  } catch (err) {
+    console.error('❌ Failed to create transaction:', err.message);
+    res.status(500).json({ error: 'Failed to create transaction', details: err.message });
+  }
+});
+
+// Delete Transaction
+app.delete('/api/v2/receipts/:id', async (req, res) => {
+  try {
+    const { prisma } = await import('./services/prisma.js');
+    const { id } = req.params;
+    
+    // First delete related items
+    await prisma.receiptItem.deleteMany({ where: { receiptId: id } });
+    // Then delete the receipt
+    await prisma.receipt.delete({ where: { id } });
+    
+    console.log('🗑️ Deleted transaction:', id);
+    res.json({ success: true, id });
+  } catch (err) {
+    console.error('❌ Failed to delete transaction:', err.message);
+    res.status(500).json({ error: 'Failed to delete transaction', details: err.message });
+  }
+});
+
 // Process Receipt Endpoint
 app.post('/api/process-receipt', upload.single('receipt'), async (req, res) => {
   const archiveLabel = isR2Enabled() ? 'Cloudflare R2' : 'Google Drive';
@@ -1040,6 +1133,8 @@ app.post('/api/process-receipt', upload.single('receipt'), async (req, res) => {
         storeName: data.store_name || 'Unknown Store',
         storeLocation: data.store_location,
         category: data.category,
+        subcategory: data.subcategory,
+        paymentMethod: data.payment_method,
         transactionDate: data.date,
         totalAmount: Number(data.total_amount ?? 0),
         taxAmount: Number(data.tax_amount ?? 0),
@@ -1049,6 +1144,7 @@ app.post('/api/process-receipt', upload.single('receipt'), async (req, res) => {
         meta: { channel: 'web' },
         items: (data.items || []).map((item) => ({
           name: item.name,
+          category: item.category,
           totalPrice: Number(item.price ?? item.amount ?? 0),
           quantity: item.quantity
         }))
@@ -1342,7 +1438,7 @@ app.get('/api/v2/system/status', async (req, res) => {
         },
         openRouter: {
           enabled: Boolean(process.env.OPENROUTER_API_KEY),
-          model: 'anthropic/claude-3.5-sonnet',
+          ...getModelConfig(),
         },
       },
       ai: aiStats,
@@ -1400,6 +1496,14 @@ async function logAIProcessing({ operation, model, inputTokens, outputTokens, du
 initDB().then(() => {
   app.listen(PORT, async () => {
     console.log(`✨ Server manifesting on port ${PORT}`);
+    
+    // Initialize OpenRouter models (required by workspace rules)
+    try {
+      await initOpenRouterModels();
+    } catch (err) {
+      console.error('⚠️ OpenRouter init warning:', err.message);
+    }
+    
     await validateConfig(); // Run validation on start
   });
 });

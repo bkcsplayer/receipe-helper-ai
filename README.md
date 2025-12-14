@@ -188,7 +188,7 @@ docker compose exec server npm run seed:comprehensive
 **Local Development:**
 | Service | URL |
 |---------|-----|
-| Frontend | `http://localhost:8080` |
+| Frontend | `http://localhost:8083` |
 | Admin | `http://localhost:8082` |
 | API | `http://localhost:3001` |
 

@@ -354,6 +354,24 @@ export const ReceiptList = (props) => (
         sortBy="category"
       />
       <FunctionField
+        label="📤 Uploaded"
+        render={(record) => {
+          if (!record?.createdAt) return <Typography color="text.disabled">—</Typography>;
+          return (
+            <Typography variant="body2" color="text.secondary">
+              {new Date(record.createdAt).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </Typography>
+          );
+        }}
+        sortBy="createdAt"
+      />
+      <FunctionField
         label="Status"
         render={(record) => (
           <Stack direction="row" spacing={0.5} alignItems="center">

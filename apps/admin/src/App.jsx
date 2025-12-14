@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Admin, Resource, Layout, AppBar, Menu, useResourceDefinitions } from 'react-admin';
 import { 
   CssBaseline, 
@@ -7,19 +8,195 @@ import {
   Typography, 
   Avatar,
   alpha,
+  Paper,
+  TextField,
+  Button,
+  Stack,
+  Alert,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
 import { 
   Dashboard as DashboardIcon, 
   Receipt as ReceiptIcon,
   AutoAwesome,
+  Login as LoginIcon,
+  Visibility,
+  VisibilityOff,
+  LockOutlined,
 } from '@mui/icons-material';
 import { dataProvider } from './dataProvider';
 import { ReceiptList } from './components/ReceiptList';
 import { ReceiptShow } from './components/ReceiptShow';
+import { ReceiptCreate } from './components/ReceiptCreate';
 import { OverviewDashboard } from './components/dashboard/OverviewDashboard';
 
-// Custom AppBar with beautiful gradient
-const MyAppBar = (props) => (
+// Login Page Component
+const LoginPage = ({ onLogin }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    
+    // Simulate network delay for UX
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    if (username === 'ffthelper' && password === '1q2w3e4R.') {
+      localStorage.setItem('admin_authenticated', 'true');
+      onLogin();
+    } else {
+      setError('Invalid username or password');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #2A3A68 0%, #1a2744 50%, #0f1a2e 100%)',
+        backgroundSize: '400% 400%',
+        animation: 'gradientShift 15s ease infinite',
+        '@keyframes gradientShift': {
+          '0%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+          '100%': { backgroundPosition: '0% 50%' },
+        },
+      }}
+    >
+      <Paper
+        elevation={24}
+        sx={{
+          p: 4,
+          width: '100%',
+          maxWidth: 400,
+          borderRadius: 4,
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+        }}
+      >
+        <Stack spacing={3} alignItems="center">
+          {/* Logo */}
+          <Avatar
+            sx={{
+              width: 72,
+              height: 72,
+              bgcolor: '#FF8C42',
+              fontSize: '2rem',
+              boxShadow: '0 8px 32px rgba(255, 140, 66, 0.4)',
+            }}
+          >
+            💰
+          </Avatar>
+
+          {/* Title */}
+          <Box textAlign="center">
+            <Typography
+              variant="h4"
+              sx={{
+                fontFamily: '"Patrick Hand", cursive',
+                fontWeight: 700,
+                color: '#2A3A68',
+                mb: 0.5,
+              }}
+            >
+              Future Frontier
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Admin Console Login
+            </Typography>
+          </Box>
+
+          {/* Error Alert */}
+          {error && (
+            <Alert severity="error" sx={{ width: '100%' }}>
+              {error}
+            </Alert>
+          )}
+
+          {/* Login Form */}
+          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+            <Stack spacing={2.5}>
+              <TextField
+                fullWidth
+                label="Username"
+                variant="outlined"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoComplete="username"
+                autoFocus
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockOutlined sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                variant="outlined"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading || !username || !password}
+                startIcon={<LoginIcon />}
+                sx={{
+                  py: 1.5,
+                  background: 'linear-gradient(135deg, #FF8C42 0%, #E67730 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #FFA76C 0%, #FF8C42 100%)',
+                  },
+                }}
+              >
+                {loading ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </Stack>
+          </Box>
+
+          <Typography variant="caption" color="text.disabled" textAlign="center">
+            Secure access to financial management
+          </Typography>
+        </Stack>
+      </Paper>
+    </Box>
+  );
+};
+
+// Custom AppBar with beautiful gradient and logout button
+const MyAppBar = ({ onLogout, ...props }) => (
   <AppBar 
     {...props} 
     sx={{ 
@@ -46,7 +223,7 @@ const MyAppBar = (props) => (
       >
         💰
       </Avatar>
-      <Box>
+      <Box sx={{ flex: 1 }}>
         <Typography 
           variant="h6" 
           sx={{ 
@@ -367,6 +544,24 @@ const theme = createTheme({
 });
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('admin_authenticated') === 'true';
+  });
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_authenticated');
+    setIsAuthenticated(false);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LoginPage onLogin={() => setIsAuthenticated(true)} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -380,6 +575,7 @@ function App() {
           name="receipts" 
           list={ReceiptList} 
           show={ReceiptShow} 
+          create={ReceiptCreate}
           recordRepresentation="storeName"
           icon={ReceiptIcon}
         />

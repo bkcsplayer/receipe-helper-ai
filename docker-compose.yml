@@ -54,11 +54,11 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
       args:
-        # Use the public IP/Domain of the VPS so the browser can reach the API
-        - VITE_API_BASE_URL=${FRONTEND_API_BASE:-http://74.48.192.171:3001}
+        # Use the public domain so the browser can reach the API
+        - VITE_API_BASE_URL=${FRONTEND_API_BASE:-https://receipe2api.khtain.com}
     restart: unless-stopped
     ports:
-      - "8081:80"
+      - "8083:80"
     depends_on:
       - server
 
@@ -67,7 +67,7 @@ services:
       context: ./apps/admin
       dockerfile: Dockerfile
       args:
-        - VITE_API_BASE_URL=${ADMIN_API_BASE:-http://74.48.192.171:3001}
+        - VITE_API_BASE_URL=${ADMIN_API_BASE:-https://receipe2api.khtain.com}
     restart: unless-stopped
     ports:
       - "8082:80"
